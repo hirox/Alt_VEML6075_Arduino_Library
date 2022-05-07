@@ -100,24 +100,13 @@ const float UVB_RESPONSIVITY[NUM_INTEGRATION_TIMES] =
 
 VEML6075::VEML6075()
 {
-    _i2cPort = NULL;
-    _debugPort = NULL;
-    _deviceAddress = VEML6075_ADDRESS_INVALID;
-    _lastReadTime = 0;
-    _integrationTime = 0;
-    _lastIndex = 0.0;
     _aResponsivity = UVA_RESPONSIVITY_100MS_UNCOVERED;
     _bResponsivity = UVB_RESPONSIVITY_100MS_UNCOVERED;
-    _hdEnabled = false;
 }
 
 boolean VEML6075::begin(void)
 {
-    if (begin(Wire) == VEML6075_ERROR_SUCCESS)
-    {
-        return true;
-    }
-    return false;
+    return begin(Wire) == VEML6075_ERROR_SUCCESS;
 }
 
 VEML6075_error_t VEML6075::begin(TwoWire &wirePort)
@@ -153,11 +142,7 @@ void VEML6075::setDebugStream(Stream &debugPort)
 
 boolean VEML6075::isConnected(void)
 {
-    if (_connected() != VEML6075_ERROR_SUCCESS)
-    {
-        return false;
-    }
-    return true;
+    return _connected() == VEML6075_ERROR_SUCCESS;
 }
 
 VEML6075_error_t VEML6075::setIntegrationTime(VEML6075::veml6075_uv_it_t it)
@@ -348,29 +333,14 @@ VEML6075_error_t VEML6075::trigger(void)
     return setTrigger(TRIGGER_ONE_OR_UV_TRIG);
 }
 
-float VEML6075::a(void)
-{
-    return uva();
-}
-
-float VEML6075::b(void)
-{
-    return uvb();
-}
-
-float VEML6075::i(void)
-{
-    return index();
-}
-
 float VEML6075::uva(void)
 {
-    return (float)rawUva() - ((UVA_A_COEF * UV_ALPHA * uvComp1()) / UV_GAMMA) - ((UVA_B_COEF * UV_ALPHA * uvComp2()) / UV_DELTA);
+    return (float)rawUva() - ((UVA_A_COEF * UV_ALPHA * visibleCompensation()) / UV_GAMMA) - ((UVA_B_COEF * UV_ALPHA * irCompensation()) / UV_DELTA);
 }
 
 float VEML6075::uvb(void)
 {
-    return (float)rawUvb() - ((UVA_C_COEF * UV_BETA * uvComp1()) / UV_GAMMA) - ((UVA_D_COEF * UV_BETA * uvComp2()) / UV_DELTA);
+    return (float)rawUvb() - ((UVA_C_COEF * UV_BETA * visibleCompensation()) / UV_GAMMA) - ((UVA_D_COEF * UV_BETA * irCompensation()) / UV_DELTA);
 }
 
 uint16_t VEML6075::rawUva(void)
@@ -438,7 +408,7 @@ float VEML6075::index(void)
     return _lastIndex;
 }
 
-uint16_t VEML6075::uvComp1(void)
+uint16_t VEML6075::visibleCompensation(void)
 {
     VEML6075_error_t err;
     uint8_t uvcomp1[2] = {0, 0};
@@ -450,7 +420,7 @@ uint16_t VEML6075::uvComp1(void)
     return (uvcomp1[0] & 0x00FF) | ((uvcomp1[1] & 0x00FF) << 8);
 }
 
-uint16_t VEML6075::uvComp2(void)
+uint16_t VEML6075::irCompensation(void)
 {
     VEML6075_error_t err;
     uint8_t uvcomp2[2] = {0, 0};
@@ -460,16 +430,6 @@ uint16_t VEML6075::uvComp2(void)
         return err;
     }
     return (uvcomp2[0] & 0x00FF) | ((uvcomp2[1] & 0x00FF) << 8);
-}
-
-uint16_t VEML6075::visibleCompensation(void)
-{
-    return uvComp1();
-}
-
-uint16_t VEML6075::irCompensation(void)
-{
-    return uvComp2();
 }
 
 VEML6075_error_t VEML6075::_connected(void)

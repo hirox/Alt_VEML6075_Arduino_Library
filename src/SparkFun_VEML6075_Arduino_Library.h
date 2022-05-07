@@ -143,10 +143,8 @@ public:
     float b(void);
     float i(void);
 
-    uint16_t uvComp1(void);
-    uint16_t uvComp2(void);
-    uint16_t visibleCompensation(void);
-    uint16_t irCompensation(void);
+    uint16_t visibleCompensation(void); // uvComp1
+    uint16_t irCompensation(void);  // uvComp2
 
     VEML6075_error_t deviceID(uint8_t *id);
     VEML6075_error_t deviceAddress(uint8_t *address);
@@ -163,15 +161,18 @@ private:
         REG_ID = 0x0C
     } VEML6075_REGISTER_t;
 
-    TwoWire *_i2cPort; //The generic connection to user's chosen I2C hardware
-    Stream *_debugPort;
-    VEML6075_Address_t _deviceAddress;
+    TwoWire *_i2cPort = nullptr; //The generic connection to user's chosen I2C hardware
+    Stream *_debugPort = nullptr;
+    VEML6075_Address_t _deviceAddress = VEML6075_ADDRESS_INVALID;
 
-    unsigned int _integrationTime;
-    unsigned long _lastReadTime;
-    float _lastIndex, _lastUVA, _lastUVB;
-    float _aResponsivity, _bResponsivity;
-    bool _hdEnabled;
+    unsigned int _integrationTime = 0;
+    unsigned long _lastReadTime = 0;
+    float _lastIndex = 0.F;
+    float _lastUVA = 0.F;
+    float _lastUVB = 0.F;
+    float _aResponsivity;
+    float _bResponsivity;
+    bool _hdEnabled = false;
 
     VEML6075_error_t _connected(void);
 
