@@ -4,11 +4,11 @@
   Do you like this library? Help support SparkFun. Buy a board!
   https://www.sparkfun.com/products/14748
   Written by Jim Lindblom @ SparkFun Electronics, May 23, 2018
-  
+
   The VEML6075 senses UVA and UVB light, which allows for a calculation
   of the UV index.
-  
-  This library handles the initialization, configuration and monitoring of the 
+
+  This library handles the initialization, configuration and monitoring of the
   UVA and UVB intensity, and calculation of the UV index.
 
   https://github.com/sparkfunX/SparkFun_VEML6075_Arduino_Library
@@ -80,22 +80,20 @@ const float UVA_D_COEF = 1.74F;
 const float UVA_RESPONSIVITY_100MS_UNCOVERED = 0.001111;
 const float UVB_RESPONSIVITY_100MS_UNCOVERED = 0.00125;
 
-const float UVA_RESPONSIVITY[NUM_INTEGRATION_TIMES] =
-    {
-        UVA_RESPONSIVITY_100MS_UNCOVERED / 0.5016286645, // 50ms
-        UVA_RESPONSIVITY_100MS_UNCOVERED,                // 100ms
-        UVA_RESPONSIVITY_100MS_UNCOVERED / 2.039087948,  // 200ms
-        UVA_RESPONSIVITY_100MS_UNCOVERED / 3.781758958,  // 400ms
-        UVA_RESPONSIVITY_100MS_UNCOVERED / 7.371335505   // 800ms
+const float UVA_RESPONSIVITY[NUM_INTEGRATION_TIMES] = {
+    UVA_RESPONSIVITY_100MS_UNCOVERED / 0.5016286645, // 50ms
+    UVA_RESPONSIVITY_100MS_UNCOVERED,                // 100ms
+    UVA_RESPONSIVITY_100MS_UNCOVERED / 2.039087948,  // 200ms
+    UVA_RESPONSIVITY_100MS_UNCOVERED / 3.781758958,  // 400ms
+    UVA_RESPONSIVITY_100MS_UNCOVERED / 7.371335505   // 800ms
 };
 
-const float UVB_RESPONSIVITY[NUM_INTEGRATION_TIMES] =
-    {
-        UVB_RESPONSIVITY_100MS_UNCOVERED / 0.5016286645, // 50ms
-        UVB_RESPONSIVITY_100MS_UNCOVERED,                // 100ms
-        UVB_RESPONSIVITY_100MS_UNCOVERED / 2.039087948,  // 200ms
-        UVB_RESPONSIVITY_100MS_UNCOVERED / 3.781758958,  // 400ms
-        UVB_RESPONSIVITY_100MS_UNCOVERED / 7.371335505   // 800ms
+const float UVB_RESPONSIVITY[NUM_INTEGRATION_TIMES] = {
+    UVB_RESPONSIVITY_100MS_UNCOVERED / 0.5016286645, // 50ms
+    UVB_RESPONSIVITY_100MS_UNCOVERED,                // 100ms
+    UVB_RESPONSIVITY_100MS_UNCOVERED / 2.039087948,  // 200ms
+    UVB_RESPONSIVITY_100MS_UNCOVERED / 3.781758958,  // 400ms
+    UVB_RESPONSIVITY_100MS_UNCOVERED / 7.371335505   // 800ms
 };
 
 VEML6075::VEML6075()
@@ -104,10 +102,7 @@ VEML6075::VEML6075()
     _bResponsivity = UVB_RESPONSIVITY_100MS_UNCOVERED;
 }
 
-boolean VEML6075::begin(void)
-{
-    return begin(Wire) == VEML6075_ERROR_SUCCESS;
-}
+boolean VEML6075::begin(void) { return begin(Wire) == VEML6075_ERROR_SUCCESS; }
 
 VEML6075_error_t VEML6075::begin(TwoWire &wirePort)
 {
@@ -135,10 +130,7 @@ VEML6075_error_t VEML6075::begin(TwoWire &wirePort)
     return VEML6075_ERROR_SUCCESS;
 }
 
-void VEML6075::setDebugStream(Stream &debugPort)
-{
-    _debugPort = &debugPort;
-}
+void VEML6075::setDebugStream(Stream &debugPort) { _debugPort = &debugPort; }
 
 boolean VEML6075::isConnected(void)
 {
@@ -204,7 +196,8 @@ VEML6075::veml6075_uv_it_t VEML6075::getIntegrationTime(void)
     {
         return IT_INVALID;
     }
-    return static_cast<VEML6075::veml6075_uv_it_t>((conf & VEML6075_UV_IT_MASK) >> VEML6075_UV_IT_SHIFT);
+    return static_cast<VEML6075::veml6075_uv_it_t>((conf & VEML6075_UV_IT_MASK) >>
+                                                   VEML6075_UV_IT_SHIFT);
 }
 
 VEML6075_error_t VEML6075::setHighDynamic(VEML6075::veml6075_hd_t hd)
@@ -241,7 +234,8 @@ VEML6075::veml6075_hd_t VEML6075::getHighDynamic(void)
     {
         return HD_INVALID;
     }
-    return static_cast<VEML6075::veml6075_hd_t>((conf & VEML6075_HD_MASK) >> VEML6075_HD_SHIFT);
+    return static_cast<VEML6075::veml6075_hd_t>((conf & VEML6075_HD_MASK) >>
+                                                VEML6075_HD_SHIFT);
 }
 
 VEML6075_error_t VEML6075::setTrigger(VEML6075::veml6075_uv_trig_t trig)
@@ -270,7 +264,8 @@ VEML6075::veml6075_uv_trig_t VEML6075::getTrigger(void)
     {
         return TRIGGER_INVALID;
     }
-    return static_cast<VEML6075::veml6075_uv_trig_t>((conf & VEML6075_TRIG_MASK) >> VEML6075_TRIG_SHIFT);
+    return static_cast<VEML6075::veml6075_uv_trig_t>(
+        (conf & VEML6075_TRIG_MASK) >> VEML6075_TRIG_SHIFT);
 }
 
 VEML6075_error_t VEML6075::setAutoForce(VEML6075::veml6075_af_t af)
@@ -299,13 +294,11 @@ VEML6075::veml6075_af_t VEML6075::getAutoForce(void)
     {
         return AF_INVALID;
     }
-    return static_cast<VEML6075::veml6075_af_t>((conf & VEML6075_AF_MASK) >> VEML6075_AF_SHIFT);
+    return static_cast<VEML6075::veml6075_af_t>((conf & VEML6075_AF_MASK) >>
+                                                VEML6075_AF_SHIFT);
 }
 
-VEML6075_error_t VEML6075::powerOn(boolean enable)
-{
-    return shutdown(!enable);
-}
+VEML6075_error_t VEML6075::powerOn(boolean enable) { return shutdown(!enable); }
 
 VEML6075_error_t VEML6075::shutdown(boolean shutdown)
 {
@@ -323,8 +316,11 @@ VEML6075_error_t VEML6075::shutdown(boolean shutdown)
     {
         sd = VEML6075::SHUT_DOWN;
     }
-    conf &= ~(VEML6075_SHUTDOWN_MASK);     // Clear shutdown bit
-    conf |= sd << VEML6075_SHUTDOWN_SHIFT; //VEML6075_MASK(conf, VEML6075_SHUTDOWN_MASK, VEML6075_SHUTDOWN_SHIFT);
+    conf &= ~(VEML6075_SHUTDOWN_MASK); // Clear shutdown bit
+    conf |=
+        sd
+        << VEML6075_SHUTDOWN_SHIFT; // VEML6075_MASK(conf, VEML6075_SHUTDOWN_MASK,
+                                    // VEML6075_SHUTDOWN_SHIFT);
     return writeI2CRegister(conf, VEML6075::REG_UV_CONF);
 }
 
@@ -335,12 +331,16 @@ VEML6075_error_t VEML6075::trigger(void)
 
 float VEML6075::uva(void)
 {
-    return (float)rawUva() - ((UVA_A_COEF * UV_ALPHA * visibleCompensation()) / UV_GAMMA) - ((UVA_B_COEF * UV_ALPHA * irCompensation()) / UV_DELTA);
+    return (float)rawUva() -
+           ((UVA_A_COEF * UV_ALPHA * visibleCompensation()) / UV_GAMMA) -
+           ((UVA_B_COEF * UV_ALPHA * irCompensation()) / UV_DELTA);
 }
 
 float VEML6075::uvb(void)
 {
-    return (float)rawUvb() - ((UVA_C_COEF * UV_BETA * visibleCompensation()) / UV_GAMMA) - ((UVA_D_COEF * UV_BETA * irCompensation()) / UV_DELTA);
+    return (float)rawUvb() -
+           ((UVA_C_COEF * UV_BETA * visibleCompensation()) / UV_GAMMA) -
+           ((UVA_D_COEF * UV_BETA * irCompensation()) / UV_DELTA);
 }
 
 uint16_t VEML6075::rawUva(void)
@@ -481,7 +481,9 @@ VEML6075_error_t VEML6075::deviceAddress(uint8_t *address)
     return err;
 }
 
-VEML6075_error_t VEML6075::readI2CBuffer(uint8_t *dest, VEML6075_REGISTER_t startRegister, uint16_t len)
+VEML6075_error_t VEML6075::readI2CBuffer(uint8_t *dest,
+                                         VEML6075_REGISTER_t startRegister,
+                                         uint16_t len)
 {
     VEML6075_DEBUGLN((STORAGE("(readI2CBuffer): read ") + String(len) +
                       STORAGE(" @ 0x") + String(startRegister, HEX)));
@@ -502,13 +504,16 @@ VEML6075_error_t VEML6075::readI2CBuffer(uint8_t *dest, VEML6075_REGISTER_t star
     for (int i = 0; i < len; i++)
     {
         dest[i] = _i2cPort->read();
-        VEML6075_DEBUGLN((STORAGE("    ") + String(i) + STORAGE(": 0x") + String(dest[i], HEX)));
+        VEML6075_DEBUGLN(
+            (STORAGE("    ") + String(i) + STORAGE(": 0x") + String(dest[i], HEX)));
     }
 
     return VEML6075_ERROR_SUCCESS;
 }
 
-VEML6075_error_t VEML6075::writeI2CBuffer(uint8_t *src, VEML6075_REGISTER_t startRegister, uint16_t len)
+VEML6075_error_t VEML6075::writeI2CBuffer(uint8_t *src,
+                                          VEML6075_REGISTER_t startRegister,
+                                          uint16_t len)
 {
     if (_deviceAddress == VEML6075_ADDRESS_INVALID)
     {
@@ -528,7 +533,9 @@ VEML6075_error_t VEML6075::writeI2CBuffer(uint8_t *src, VEML6075_REGISTER_t star
     return VEML6075_ERROR_SUCCESS;
 }
 
-VEML6075_error_t VEML6075::readI2CRegister(veml6075_t *dest, VEML6075_REGISTER_t registerAddress)
+VEML6075_error_t
+VEML6075::readI2CRegister(veml6075_t *dest,
+                          VEML6075_REGISTER_t registerAddress)
 {
     VEML6075_error_t err;
     uint8_t tempDest[2];
@@ -540,7 +547,9 @@ VEML6075_error_t VEML6075::readI2CRegister(veml6075_t *dest, VEML6075_REGISTER_t
     return err;
 }
 
-VEML6075_error_t VEML6075::writeI2CRegister(veml6075_t data, VEML6075_REGISTER_t registerAddress)
+VEML6075_error_t
+VEML6075::writeI2CRegister(veml6075_t data,
+                           VEML6075_REGISTER_t registerAddress)
 {
     uint8_t d[2];
     // Write LSB first

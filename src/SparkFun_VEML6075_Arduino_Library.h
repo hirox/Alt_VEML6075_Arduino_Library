@@ -7,10 +7,10 @@
 
   The VEML6075 senses UVA and UVB light, which allows for a calculation
   of the UV index.
-  
-  This library handles the initialization, configuration and monitoring of the 
+
+  This library handles the initialization, configuration and monitoring of the
   UVA and UVB intensity, and calculation of the UV index.
-  
+
   https://github.com/sparkfunX/SparkFun_VEML6075_Arduino_Library
 
   Development environment specifics:
@@ -139,12 +139,9 @@ public:
     float uva(void);
     float uvb(void);
     float index(void);
-    float a(void);
-    float b(void);
-    float i(void);
 
     uint16_t visibleCompensation(void); // uvComp1
-    uint16_t irCompensation(void);  // uvComp2
+    uint16_t irCompensation(void);      // uvComp2
 
     VEML6075_error_t deviceID(uint8_t *id);
     VEML6075_error_t deviceAddress(uint8_t *address);
@@ -161,7 +158,8 @@ private:
         REG_ID = 0x0C
     } VEML6075_REGISTER_t;
 
-    TwoWire *_i2cPort = nullptr; //The generic connection to user's chosen I2C hardware
+    TwoWire *_i2cPort =
+        nullptr; // The generic connection to user's chosen I2C hardware
     Stream *_debugPort = nullptr;
     VEML6075_Address_t _deviceAddress = VEML6075_ADDRESS_INVALID;
 
@@ -177,8 +175,12 @@ private:
     VEML6075_error_t _connected(void);
 
     // I2C Read/Write
-    VEML6075_error_t readI2CBuffer(uint8_t *dest, VEML6075_REGISTER_t startRegister, uint16_t len);
-    VEML6075_error_t writeI2CBuffer(uint8_t *src, VEML6075_REGISTER_t startRegister, uint16_t len);
-    VEML6075_error_t readI2CRegister(veml6075_t *dest, VEML6075_REGISTER_t registerAddress);
-    VEML6075_error_t writeI2CRegister(veml6075_t data, VEML6075_REGISTER_t registerAddress);
+    VEML6075_error_t
+    readI2CBuffer(uint8_t *dest, VEML6075_REGISTER_t startRegister, uint16_t len);
+    VEML6075_error_t
+    writeI2CBuffer(uint8_t *src, VEML6075_REGISTER_t startRegister, uint16_t len);
+    VEML6075_error_t readI2CRegister(veml6075_t *dest,
+                                     VEML6075_REGISTER_t registerAddress);
+    VEML6075_error_t writeI2CRegister(veml6075_t data,
+                                      VEML6075_REGISTER_t registerAddress);
 };
