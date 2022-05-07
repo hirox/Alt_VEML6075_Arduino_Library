@@ -64,89 +64,66 @@ struct test
 class VEML6075
 {
 public:
-    typedef enum
+    enum class IntegrationTime : unsigned int
     {
-        IT_50MS,
-        IT_100MS,
-        IT_200MS,
-        IT_400MS,
-        IT_800MS,
-        IT_RESERVED_0,
-        IT_RESERVED_1,
-        IT_RESERVED_2,
-        IT_INVALID
-    } veml6075_uv_it_t;
+        IT_50MS = 0,
+        IT_100MS = 1,
+        IT_200MS = 2,
+        IT_400MS = 3,
+        IT_800MS = 4,
+    };
 
-    typedef enum
+#pragma pack(1)
+    struct Configuration
     {
-        DYNAMIC_NORMAL,
-        DYNAMIC_HIGH,
-        HD_INVALID
-    } veml6075_hd_t;
-
-    typedef enum
-    {
-        NO_TRIGGER,
-        TRIGGER_ONE_OR_UV_TRIG,
-        TRIGGER_INVALID
-    } veml6075_uv_trig_t;
-
-    typedef enum
-    {
-        AF_DISABLE,
-        AF_ENABLE,
-        AF_INVALID
-    } veml6075_af_t;
-
-    typedef enum
-    {
-        POWER_ON,
-        SHUT_DOWN,
-        SD_INVALID
-    } VEML6075_shutdown_t;
+        bool shutdown : 1;
+        bool active_force : 1;
+        bool trigger : 1;
+        bool high_dynamic : 1;
+        IntegrationTime integration_time : 3;
+        uint8_t RESERVED : 1;
+    };
+    static_assert(sizeof(Configuration) == 1);
+    static_assert(std::is_trivially_copyable_v<Configuration>);
+#pragma pack()
 
     VEML6075();
 
     // begin initializes the Wire port and I/O expander
-    boolean begin(void);
+    bool begin(void);
     // give begin a TwoWire port to specify the I2C port
     VEML6075_error_t begin(TwoWire &wirePort);
 
     // setDebugStream to enable library debug statements
     void setDebugStream(Stream &debugPort = Serial);
 
-    boolean isConnected(void);
+    bool isConnected(void);
 
-    // Configuration controls
-    VEML6075_error_t setIntegrationTime(veml6075_uv_it_t it);
-    veml6075_uv_it_t getIntegrationTime(void);
+    VEML6075_error_t getConfiguration(Configuration *out);
+    VEML6075_error_t setConfiguration(const Configuration &conf);
 
-    VEML6075_error_t setHighDynamic(veml6075_hd_t hd);
-    veml6075_hd_t getHighDynamic(void);
-
-    VEML6075_error_t setTrigger(veml6075_uv_trig_t trig);
-    veml6075_uv_trig_t getTrigger(void);
     VEML6075_error_t trigger(void);
 
-    VEML6075_error_t setAutoForce(veml6075_af_t af);
-    veml6075_af_t getAutoForce(void);
+    VEML6075_error_t powerOn(bool enable = true);
+    VEML6075_error_t shutdown(bool shutdown = true);
 
-    VEML6075_error_t powerOn(boolean enable = true);
-    VEML6075_error_t shutdown(boolean shutdown = true);
-
-    uint16_t rawUva(void);
-    uint16_t rawUvb(void);
-    float uva(void);
-    float uvb(void);
-    float index(void);
-
-    uint16_t visibleCompensation(void); // uvComp1
-    uint16_t irCompensation(void);      // uvComp2
+    VEML6075_error_t get(float *uva, float *uvb, float *index, float *rawa = nullptr, float *rawb = nullptr, float *visible = nullptr, float *ir = nullptr);
 
     VEML6075_error_t deviceID(uint8_t *id);
     VEML6075_error_t deviceAddress(uint8_t *address);
 
 private:
+    float calcUva(const float rawa, const float visiblecomp, const float ircomp);
+    float calcUvb(const float rawb, const float visiblecomp, const float ircomp);
+    float calcUvindex(const float uva, const float uvb);
+
+    void updateConfiguration(const Configuration &conf);
+
+    VEML6075_error_t rawUva(uint16_t *out);
+    VEML6075_error_t rawUvb(uint16_t *out);
+    VEML6075_error_t visibleCompensation(uint16_t *out); // uvComp1
+    VEML6075_error_t irCompensation(uint16_t *out);      // uvComp2
+
     // VEML6075 registers:
     typedef enum
     {
@@ -164,10 +141,6 @@ private:
     VEML6075_Address_t _deviceAddress = VEML6075_ADDRESS_INVALID;
 
     unsigned int _integrationTime = 0;
-    unsigned long _lastReadTime = 0;
-    float _lastIndex = 0.F;
-    float _lastUVA = 0.F;
-    float _lastUVB = 0.F;
     float _aResponsivity;
     float _bResponsivity;
     bool _hdEnabled = false;
