@@ -94,6 +94,7 @@ VEML6075_error_t VEML6075::begin(TwoWire &wirePort)
 
     _deviceAddress = VEML6075_ADDRESS;
     _i2cPort = &wirePort;
+    _i2cPort->begin();
 
     err = _connected();
     if (err != VEML6075_ERROR_SUCCESS)
@@ -102,7 +103,7 @@ VEML6075_error_t VEML6075::begin(TwoWire &wirePort)
     }
 
     Configuration conf;
-    VEML6075_error_t err = getConfiguration(&conf);
+    err = getConfiguration(&conf);
     if (err != VEML6075_ERROR_SUCCESS)
         return err;
 
@@ -123,28 +124,31 @@ bool VEML6075::isConnected(void)
 
 VEML6075_error_t VEML6075::getConfiguration(Configuration *out)
 {
-    auto err = readI2CBuffer(static_cast<void *>(out), VEML6075::REG_UV_CONF, 1);
+    veml6075_t reg;
+    auto err = readI2CRegister(&reg, VEML6075::REG_UV_CONF);
     if (err == VEML6075_ERROR_SUCCESS)
-        updateConfiguration(conf);
-    return err
+    {
+        *reinterpret_cast<uint8_t *>(out) = reg & 0xFF;
+        updateConfiguration(*out);
+    }
+    return err;
 }
 
 VEML6075_error_t VEML6075::setConfiguration(const Configuration &conf)
 {
-    auto err = writeI2CBuffer(&conf, VEML6075::REG_UV_CONF, 1);
+    veml6075_t reg = *reinterpret_cast<const uint8_t *>(&conf);
+    auto err = writeI2CRegister(reg, VEML6075::REG_UV_CONF);
     if (err == VEML6075_ERROR_SUCCESS)
         updateConfiguration(conf);
-    return err
+    return err;
 }
 
 void VEML6075::updateConfiguration(const Configuration &conf)
 {
     _aResponsivity = UVA_RESPONSIVITY[static_cast<uint8_t>(conf.integration_time)];
     _bResponsivity = UVB_RESPONSIVITY[static_cast<uint8_t>(conf.integration_time)];
-    _hdEnabled = conf.high_dynamic;
+    _last_conf = conf;
 }
-
-VEML6075_error_t VEML6075::powerOn(bool enable) { return shutdown(!enable); }
 
 VEML6075_error_t VEML6075::shutdown(bool shutdown)
 {
@@ -189,7 +193,7 @@ float VEML6075::calcUvindex(const float uva, const float uvb)
     float uvia = uva * (1.F / UV_ALPHA) * _aResponsivity;
     float uvib = uvb * (1.F / UV_BETA) * _bResponsivity;
     auto index = (uvia + uvib) / 2.F;
-    if (_hdEnabled)
+    if (_last_conf.high_dynamic)
     {
         index *= HD_SCALAR;
     }
@@ -197,7 +201,7 @@ float VEML6075::calcUvindex(const float uva, const float uvb)
     return index;
 }
 
-VEML6075_error_t VEML6075::get(float *uva, float *uvb, float *index, float *rawa, float *rawb, float *visible, float *ir)
+VEML6075_error_t VEML6075::get(float *uva, float *uvb, float *uvindex, float *rawa, float *rawb, float *visible, float *ir)
 {
     VEML6075_error_t err;
     uint16_t ra;
@@ -225,8 +229,8 @@ VEML6075_error_t VEML6075::get(float *uva, float *uvb, float *index, float *rawa
         *uva = a;
     if (uvb)
         *uvb = b;
-    if (index)
-        *index = calcUvindex(a, b);
+    if (uvindex)
+        *uvindex = calcUvindex(a, b);
     if (rawa)
         *rawa = ra;
     if (rawb)
@@ -253,7 +257,7 @@ VEML6075_error_t VEML6075::visibleCompensation(uint16_t *out)
     return readI2CRegister(out, VEML6075::REG_UVCOMP1_DATA);
 }
 
-uint16_t VEML6075::irCompensation(void)
+VEML6075_error_t VEML6075::irCompensation(uint16_t *out)
 {
     return readI2CRegister(out, VEML6075::REG_UVCOMP2_DATA);
 }
@@ -293,31 +297,12 @@ VEML6075_error_t VEML6075::deviceID(uint8_t *id)
     return err;
 }
 
-VEML6075_error_t VEML6075::deviceAddress(uint8_t *address)
-{
-    veml6075_t ret[2] = {0, 0};
-    VEML6075_error_t err;
-    err = readI2CRegister(ret, REG_ID);
-    if (err != VEML6075_ERROR_SUCCESS)
-    {
-        return err;
-    }
-    *address = ret[1];
-    VEML6075_DEBUGLN(("Address: " + String(ret[1])));
-    return err;
-}
-
 VEML6075_error_t VEML6075::readI2CBuffer(uint8_t *dest,
                                          VEML6075_REGISTER_t startRegister,
                                          uint16_t len)
 {
-    VEML6075_DEBUGLN((STORAGE("(readI2CBuffer): read ") + String(len) +
-                      STORAGE(" @ 0x") + String(startRegister, HEX)));
-    if (_deviceAddress == VEML6075_ADDRESS_INVALID)
-    {
-        VEML6075_DEBUGLN(STORAGE("    ERR (readI2CBuffer): Invalid address"));
-        return VEML6075_ERROR_INVALID_ADDRESS;
-    }
+    VEML6075_DEBUGLN((STORAGE("(readI2CBuffer): len ") + String(len) +
+                      STORAGE(" @ reg 0x") + String(startRegister, HEX)));
     _i2cPort->beginTransmission((uint8_t)_deviceAddress);
     _i2cPort->write(startRegister);
     if (_i2cPort->endTransmission(false) != 0)
@@ -337,20 +322,19 @@ VEML6075_error_t VEML6075::readI2CBuffer(uint8_t *dest,
     return VEML6075_ERROR_SUCCESS;
 }
 
-VEML6075_error_t VEML6075::writeI2CBuffer(uint8_t *src,
+VEML6075_error_t VEML6075::writeI2CBuffer(const uint8_t *src,
                                           VEML6075_REGISTER_t startRegister,
                                           uint16_t len)
 {
-    if (_deviceAddress == VEML6075_ADDRESS_INVALID)
-    {
-        VEML6075_DEBUGLN(STORAGE("ERR (readI2CBuffer): Invalid address"));
-        return VEML6075_ERROR_INVALID_ADDRESS;
-    }
+    VEML6075_DEBUGLN((STORAGE("(writeI2CBuffer): len ") + String(len) +
+                      STORAGE(" @ reg 0x") + String(startRegister, HEX)));
     _i2cPort->beginTransmission((uint8_t)_deviceAddress);
     _i2cPort->write(startRegister);
     for (int i = 0; i < len; i++)
     {
         _i2cPort->write(src[i]);
+        VEML6075_DEBUGLN(
+            (STORAGE("    ") + String(i) + STORAGE(": 0x") + String(src[i], HEX)));
     }
     if (_i2cPort->endTransmission(true) != 0)
     {
@@ -361,7 +345,7 @@ VEML6075_error_t VEML6075::writeI2CBuffer(uint8_t *src,
 
 VEML6075_error_t
 VEML6075::readI2CRegister(veml6075_t *dest,
-                          VEML6075_REGISTER_t registerAddress)
+                          const VEML6075_REGISTER_t registerAddress)
 {
     VEML6075_error_t err;
     uint8_t tempDest[2];
@@ -374,8 +358,8 @@ VEML6075::readI2CRegister(veml6075_t *dest,
 }
 
 VEML6075_error_t
-VEML6075::writeI2CRegister(veml6075_t data,
-                           VEML6075_REGISTER_t registerAddress)
+VEML6075::writeI2CRegister(const veml6075_t data,
+                           const VEML6075_REGISTER_t registerAddress)
 {
     uint8_t d[2];
     // Write LSB first

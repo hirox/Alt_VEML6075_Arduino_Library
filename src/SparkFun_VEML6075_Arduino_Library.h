@@ -39,12 +39,8 @@
 
 typedef uint16_t veml6075_t;
 
-//  Valid VEML6075 addresses
-typedef enum
-{
-    VEML6075_ADDRESS = 0x10,
-    VEML6075_ADDRESS_INVALID = 0xFF
-} VEML6075_Address_t;
+// VEML6075 addresses
+const uint8_t VEML6075_ADDRESS = 0x10;
 
 // VEML6075 error code returns:
 typedef enum
@@ -56,12 +52,6 @@ typedef enum
     VEML6075_ERROR_SUCCESS = 1
 } VEML6075_error_t;
 const VEML6075_error_t VEML6075_SUCCESS = VEML6075_ERROR_SUCCESS;
-
-struct test
-{
-    float a;
-    float b;
-};
 
 class VEML6075
 {
@@ -84,9 +74,30 @@ public:
         bool high_dynamic : 1;
         IntegrationTime integration_time : 3;
         uint8_t RESERVED : 1;
+
+        IntegrationTime nextIntegrationTime()
+        {
+            if (integration_time == IntegrationTime::IT_50MS)
+                return IntegrationTime::IT_100MS;
+            if (integration_time == IntegrationTime::IT_100MS)
+                return IntegrationTime::IT_200MS;
+            if (integration_time == IntegrationTime::IT_200MS)
+                return IntegrationTime::IT_400MS;
+            if (integration_time == IntegrationTime::IT_400MS)
+                return IntegrationTime::IT_800MS;
+            return IntegrationTime::IT_50MS;
+        }
+
+        const char *integrationTimeString()
+        {
+            return integration_time == IntegrationTime::IT_50MS ? "50ms" : integration_time == IntegrationTime::IT_100MS ? "100ms"
+                                                                       : integration_time == IntegrationTime::IT_200MS   ? "200ms"
+                                                                       : integration_time == IntegrationTime::IT_400MS   ? "400ms"
+                                                                                                                         : "800ms";
+        }
     };
     static_assert(sizeof(Configuration) == 1);
-    static_assert(std::is_trivially_copyable_v<Configuration>);
+    static_assert(std::is_trivially_copyable<Configuration>::value);
 #pragma pack()
 
     VEML6075();
@@ -101,18 +112,18 @@ public:
 
     bool isConnected(void);
 
+    Configuration getCachedConfiguration() { return _last_conf; }
     VEML6075_error_t getConfiguration(Configuration *out);
     VEML6075_error_t setConfiguration(const Configuration &conf);
 
     VEML6075_error_t trigger(void);
 
-    VEML6075_error_t powerOn(bool enable = true);
+    VEML6075_error_t powerOn(bool enable = true) { return shutdown(!enable); }
     VEML6075_error_t shutdown(bool shutdown = true);
 
-    VEML6075_error_t get(float *uva, float *uvb, float *index, float *rawa = nullptr, float *rawb = nullptr, float *visible = nullptr, float *ir = nullptr);
+    VEML6075_error_t get(float *uva, float *uvb, float *uvindex, float *rawa = nullptr, float *rawb = nullptr, float *visible = nullptr, float *ir = nullptr);
 
     VEML6075_error_t deviceID(uint8_t *id);
-    VEML6075_error_t deviceAddress(uint8_t *address);
 
 private:
     float calcUva(const float rawa, const float visiblecomp, const float ircomp);
@@ -140,12 +151,12 @@ private:
     TwoWire *_i2cPort =
         nullptr; // The generic connection to user's chosen I2C hardware
     Stream *_debugPort = nullptr;
-    VEML6075_Address_t _deviceAddress = VEML6075_ADDRESS_INVALID;
+    uint8_t _deviceAddress = VEML6075_ADDRESS;
 
     unsigned int _integrationTime = 0;
     float _aResponsivity;
     float _bResponsivity;
-    bool _hdEnabled = false;
+    Configuration _last_conf = {};
 
     VEML6075_error_t _connected(void);
 
@@ -153,9 +164,9 @@ private:
     VEML6075_error_t
     readI2CBuffer(uint8_t *dest, VEML6075_REGISTER_t startRegister, uint16_t len);
     VEML6075_error_t
-    writeI2CBuffer(uint8_t *src, VEML6075_REGISTER_t startRegister, uint16_t len);
+    writeI2CBuffer(const uint8_t *src, VEML6075_REGISTER_t startRegister, uint16_t len);
     VEML6075_error_t readI2CRegister(veml6075_t *dest,
-                                     VEML6075_REGISTER_t registerAddress);
-    VEML6075_error_t writeI2CRegister(veml6075_t data,
-                                      VEML6075_REGISTER_t registerAddress);
+                                     const VEML6075_REGISTER_t registerAddress);
+    VEML6075_error_t writeI2CRegister(const veml6075_t data,
+                                      const VEML6075_REGISTER_t registerAddress);
 };
