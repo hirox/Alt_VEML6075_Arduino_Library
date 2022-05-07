@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <type_traits>
+
 #if (ARDUINO >= 100)
 #include "Arduino.h"
 #else
