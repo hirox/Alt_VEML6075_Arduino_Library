@@ -85,8 +85,6 @@ VEML6075::VEML6075()
     _bResponsivity = UVB_RESPONSIVITY_100MS_UNCOVERED;
 }
 
-bool VEML6075::begin(void) { return begin(Wire) == VEML6075_ERROR_SUCCESS; }
-
 VEML6075_error_t VEML6075::begin(TwoWire &wirePort)
 {
     uint8_t systemControl = 0;

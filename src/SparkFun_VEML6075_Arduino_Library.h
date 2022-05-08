@@ -103,7 +103,7 @@ public:
     VEML6075();
 
     // begin initializes the Wire port and I/O expander
-    bool begin(void);
+    bool begin(void) { return begin(Wire) == VEML6075_ERROR_SUCCESS; }
     // give begin a TwoWire port to specify the I2C port
     VEML6075_error_t begin(TwoWire &wirePort);
 
