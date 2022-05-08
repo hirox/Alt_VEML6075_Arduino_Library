@@ -209,6 +209,14 @@ VEML6075_error_t VEML6075::get(float *uva, float *uvb, float *uvindex, float *ra
     uint16_t viscomp;
     uint16_t ircomp;
 
+    if (_i2c_error)
+    {
+        err = setConfiguration(getCachedConfiguration());
+        if (err != VEML6075_ERROR_SUCCESS)
+            return err;
+        _i2c_error = false;
+    }
+
     err = rawUva(&ra);
     if (err != VEML6075_ERROR_SUCCESS)
         return err;
@@ -308,10 +316,16 @@ VEML6075_error_t VEML6075::readI2CBuffer(uint8_t *dest,
     if (_i2cPort->endTransmission(false) != 0)
     {
         VEML6075_DEBUGLN(STORAGE("    ERR (readI2CBuffer): End transmission"));
+        _i2c_error = true;
         return VEML6075_ERROR_READ;
     }
 
-    _i2cPort->requestFrom((uint8_t)_deviceAddress, (uint8_t)len);
+    if (_i2cPort->requestFrom((uint8_t)_deviceAddress, (uint8_t)len) != len)
+    {
+        VEML6075_DEBUGLN(STORAGE("    ERR (readI2CBuffer): requestFrom"));
+        _i2c_error = true;
+        return VEML6075_ERROR_READ;
+    }
     for (int i = 0; i < len; i++)
     {
         dest[i] = _i2cPort->read();
@@ -338,6 +352,7 @@ VEML6075_error_t VEML6075::writeI2CBuffer(const uint8_t *src,
     }
     if (_i2cPort->endTransmission(true) != 0)
     {
+        _i2c_error = true;
         return VEML6075_ERROR_WRITE;
     }
     return VEML6075_ERROR_SUCCESS;

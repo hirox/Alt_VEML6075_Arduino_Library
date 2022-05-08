@@ -158,6 +158,8 @@ private:
     float _bResponsivity;
     Configuration _last_conf = {};
 
+    bool _i2c_error = false;
+
     VEML6075_error_t _connected(void);
 
     // I2C Read/Write
